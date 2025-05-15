@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>💖 甜蜜告白 - 520 专属 💖</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ========== 全局样式 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; overflow-x: hidden; line-height: 1.5; }
+
+        /* ========== 背景与飘心 ========== */
+        .dynamic-bg { position: fixed; inset: 0; background: linear-gradient(45deg, #ffb3d9, #ffd9eb); z-index: -2; }
+        .floating-hearts { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+        .heart-particle { position: absolute; font-size: 24px; color: rgba(255, 56, 96, 0.3); animation: float 8s infinite linear; }
+
+        /* ========== 信封弹出 ========== */
+        .envelope-container { position: fixed; inset: 0; background: rgba(255,255,255,0.1); backdrop-filter: blur(2px); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: opacity 0.6s; }
+        .envelope { width: 60vw; max-width: 300px; height: auto; aspect-ratio: 3/2; position: relative; transition: transform 0.8s cubic-bezier(0.68,-0.55,0.27,1.55); }
+        .envelope-body { position: absolute; width: 100%; height: 100%; background: linear-gradient(160deg,#ff3860 60%,#ff1744); clip-path: polygon(0 0,100% 0,100% 85%,50% 100%,0 85%); }
+        .envelope-lid { position: absolute; width:100%; height:100%; background: linear-gradient(20deg,#ff1744 30%,#ff3860); clip-path: polygon(0 0,100% 0,50% 35%); transform-origin: top; transition: transform 0.6s; }
+        .wax-seal { position:absolute; top:50%; left:50%; transform:translate(-50%,-30%); font-size:3em; color:gold; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: sealFloat 2s ease-in-out infinite; }
+
+        /* ========== 主容器 ========== */
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; opacity: 0; visibility: hidden; transition: opacity 1s; position: relative; }
+        .show-content .container { opacity: 1; visibility: visible; }
+
+        /* ========== 右下角淡心 ========== */
+        #bottomHeart { position: fixed; bottom: 20px; right: 20px; font-size: 48px; opacity: 0.1; display: none; pointer-events: auto; z-index: 10; cursor: pointer; }
+
+        /* ========== 弹信模态框 ========== */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #fffbe6; border: 2px solid #ffd1dc; width: 80vw; max-width: 400px; padding: 20px; border-radius: 10px; position: relative; font-family: 'Segoe Script', cursive; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content h3 { text-align: center; margin-bottom: 10px; color: #ff3860; }
+        .modal-content p { white-space: pre-wrap; margin-bottom: 20px; }
+        .close-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 1.5em; cursor: pointer; color: #ff3860; }
+
+        /* ========== 导航按钮 ========== */
+        .nav-buttons { display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap; }
+        .nav-buttons button { flex: 1 1 auto; margin: 5px; padding: 12px 20px; border: none; border-radius: 25px; background: #ff3860; color: #fff; cursor: pointer; font-size: 1em; transition: transform 0.3s; }
+        .nav-buttons button:hover { transform: scale(1.05); }
+
+        /* ========== 功能区 ========== */
+        .section { background: rgba(255,255,255,0.95); border-radius: 15px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        #timer { position: sticky; top: 0; background: rgba(255,255,255,0.5); padding: 10px; font-size: 2em; color: #ff3860; text-align: center; z-index: 5; }
+
+        /* 照片墙与删除按钮 */
+        .photo-wall { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; justify-content: center; }
+        .photo-wrapper { position: relative; }
+        .photo-item { max-width: 150px; border-radius: 10px; cursor: zoom-in; transition: transform 0.3s; }
+        .photo-item.zoom { transform: scale(2); z-index: 999; cursor: zoom-out; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border: none; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; font-size: 16px; line-height: 24px; text-align: center; }
+
+        /* 留言、千纸鹤、愿望列表 */
+        #messageBoard, #craneList, #wishList { max-height: 300px; overflow-y: auto; }
+        .message, .crane, .wish { background: #fff; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffe5ec; display: flex; justify-content: space-between; align-items: center; }
+        .wish.completed span { text-decoration: line-through; color: gray; }
+
+        /* 千纸鹤动画 */
+        .crane.animate { animation: pop 0.5s ease; }
+        @keyframes pop { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        /* 瓶数与兑换券 */
+        #bottleCount { margin-top: 10px; font-weight: bold; }
+        #voucher { margin-top: 15px; font-size: 1.2em; color: #ff3860; }
+
+        /* 响应式布局 */
+        @media (max-width: 768px) {.nav-buttons { flex-direction: column; align-items: stretch; } .nav-buttons button { width: 100%; } .container { padding: 15px; }}
+        @media (max-width: 480px) {.envelope { width: 80vw; } .photo-item { max-width: 45vw; } .delete-btn { width: 20px; height: 20px; font-size: 12px; } textarea, input[type="text"] { width: 100%; font-size: 1em; padding: 10px; } .section { padding: 15px; margin: 15px 0; }}
+    </style>
+</head>
+<body>
+    <!-- 背景飘心 -->
+    <div class="dynamic-bg"><div id="heartsContainer" class="floating-hearts"></div></div>
+    <!-- 信封弹出 -->
+    <div id="envelopeContainer" class="envelope-container"><div id="envelope" class="envelope"><div class="envelope-body"></div><div class="envelope-lid"></div><div class="wax-seal">💌</div></div></div>
+    <!-- 底部淡心 -->
+    <div id="bottomHeart">❤️</div>
+    <!-- 信件模态框 -->
+    <div id="letterModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleLetter(false)">&times;</button>
+            <h3>致亲爱的你：</h3>
+            <p><!-- 在此添加信件内容 --></p>
+        </div>
+    </div>
+    <!-- 主内容区域 -->
+    <div id="mainContent" class="container">
+        <!-- 恋爱计时器 -->
+        <div id="timer" class="section"></div>
+        <!-- 导航按钮 -->
+        <div class="nav-buttons">
+            <button data-target="gallerySection">📸 画廊</button>
+            <button data-target="messageSection">💌 留言板</button>
+            <button data-target="craneSection">🦢 千纸鹤</button>
+            <button data-target="wishSection">🎯 愿望清单</button>
+        </div>
+        <!-- 各功能模块 -->
+        <section id="gallerySection" class="section hidden">
+            <h2>📸 我们的记忆画廊</h2>
+            <input id="photoUpload" type="file" accept="image/*" multiple>
+            <div id="photoWall" class="photo-wall"></div>
+        </section>
+        <section id="messageSection" class="section hidden">
+            <h2>💌 爱的留言板</h2>
+            <textarea id="messageInput" placeholder="输入你的心意..." rows="3"></textarea>
+            <button onclick="addMessage()">💖 保存留言</button>
+            <div id="messageBoard"></div>
+        </section>
+        <section id="craneSection" class="section hidden">
+            <h2>🦢 矛盾千纸鹤</h2>
+            <textarea id="craneInput" placeholder="写下你的小小矛盾..." rows="3"></textarea>
+            <button onclick="addCrane()">📝 折成千纸鹤</button>
+            <div id="craneList"></div>
+            <div id="bottleCount">已装入玻璃瓶：<span id="bottles">0</span>/30</div>
+            <div id="voucher" class="hidden">🎁 恭喜！你获得了一个愿望兑换券！</div>
+        </section>
+        <section id="wishSection" class="section hidden">
+            <h2>🎯 在一起一定要完成的愿望</h2>
+            <input id="wishInput" type="text" placeholder="输入你的愿望...">
+            <button onclick="addWish()">✍️ 添加愿望</button>
+            <div id="wishList"></div>
+        </section>
+    </div>
+    <script>
+        // 飘心背景
+        function createHearts() {
+            const icons = ['❤️','💖','💗','💓'];
+            setInterval(() => {
+                const h = document.createElement('div'); h.className = 'heart-particle';
+                h.textContent = icons[Math.floor(Math.random()*icons.length)];
+                h.style.iormente= Math.random()*100 + 'vw'; h.style.animationDuration = 5+Math.random()*5+'s';
+                document.getElementById('heartsContainer').appendChild(h);
+                setTimeout(() => h.remove(), 8000);
+            }, 300);
+        }
+        createHearts();
+
+        // 信封打开动画
+        document.getElementById('envelopeContainer').addEventListener('click', () => {
+            const env = document.getElementById('envelope');
+            env.style.transform = 'translateY(-50%) scale(1.5) rotate(-10deg)';
+            env.querySelector('.envelope-lid').style.transform = 'rotateX(180deg)';
+            setTimeout(() => {
+                document.getElementById('envelopeContainer').style.opacity = '0';
+                document.getElementById('bottomHeart').style.display = 'block';
+                document.body.classList.add('show-content');
+                setTimeout(() => document.getElementById('envelopeContainer').style.display = 'none', 500);
+            }, 800);
+        });
+
+        // 弹信函数
+        function toggleLetter(show) {
+            document.getElementById('letterModal').style.display = show ? 'flex' : 'none';
+        }
+        document.getElementById('bottomHeart').addEventListener('click', () => toggleLetter(true));
+
+        // 计时器
+        const startDate = new Date('2025-04-18');
+        function updateTimer() {
+            const now = new Date(); const diff = now - startDate;
+            const days = Math.floor(diff/86400000), hrs = Math.floor((diff%86400000)/3600000);
+            document.getElementById('timer').innerHTML = `💞 ${days} 天 ${hrs} 小时<br><small>自 ${startDate.toLocaleDateString()} 起</small>`;
+        }
+        setInterval(updateTimer, 1000); updateTimer();
+
+        // 导航按钮切换模块
+        document.querySelectorAll('.nav-buttons button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                document.getElementById(btn.dataset.target).classList.remove('hidden');
+            });
+        });
+
+        // 照片上传与删除
+        document.getElementById('photoUpload').addEventListener('change', e => {
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const wrapper = document.createElement('div'); wrapper.className = 'photo-wrapper';
+                    const img = new Image(); img.src = ev.target.result; img.className = 'photo-item'; img.onclick = () => img.classList.toggle('zoom');
+                    const del = document.createElement('button'); del.className = 'delete-btn'; del.textContent = '×'; del.onclick = () => wrapper.remove();
+                    wrapper.append(img, del);
+                    document.getElementById('photoWall').appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // 留言功能
+        function addMessage() {
+            const i = document.getElementById('messageInput'); if (!i.value.trim()) return;
+            const b = document.createElement('div'); b.className = 'message';
+            b.innerHTML = `<div>${new Date().toLocaleString()}</div><div>${i.value}</div>`;
+            document.getElementById('messageBoard').prepend(b); i.value = '';
+        }
+
+        // 千纸鹤功能与动画
+        let bottleCount = 0;
+        function addCrane() {
+            const i = document.getElementById('craneInput'); if (!i.value.trim() || bottleCount >= 30) return;
+            const c = document.createElement('div'); c.className = 'crane animate'; c.textContent = i.value;
+            document.getElementById('craneList').prepend(c);
+            c.addEventListener('animationend', () => c.classList.remove('animate'));
+            bottleCount++; document.getElementById('bottles').textContent = bottleCount; i.value = '';
+            if (bottleCount === 30) document.getElementById('voucher').classList.remove('hidden');
+        }
+
+        // 愿望清单功能
+        function addWish() {
+            const i = document.getElementById('wishInput'); if (!i.value.trim()) return;
+            const w = document.createElement('div'); w.className = 'wish';
+            const span = document.createElement('span'); span.textContent = i.value;
+            const btn = document.createElement('button'); btn.textContent = '✔'; btn.onclick = () => w.classList.toggle('completed');
+            w.append(span, btn);
+            document.getElementById('wishList').appendChild(w);
+            i.value = '';
+        }
+    </script>
+</body>
+</html>
